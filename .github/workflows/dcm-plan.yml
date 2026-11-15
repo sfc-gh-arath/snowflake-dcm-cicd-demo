@@ -1,0 +1,45 @@
+name: DCM Plan (Pull Request)
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['sales_cicd/**', '.github/workflows/**']
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: SFSENORTHAMERICA-DEMO459
+  SNOWFLAKE_ROLE: DCM_DEVELOPER
+  SNOWFLAKE_WAREHOUSE: DCM_DEMO_1_WH_DEV
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    environment: dev   # OIDC subject: repo:<owner>/<repo>:environment:dev
+    env:
+      SNOWFLAKE_USER: DCM_CICD_DEV_SVC
+    defaults:
+      run:
+        working-directory: sales_cicd
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Snowflake CLI (OIDC)
+        uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+
+      - name: Test connection
+        run: snow connection test -x
+
+      - name: Analyze definitions
+        run: snow dcm raw-analyze --target DEV -x
+
+      - name: Plan DEV
+        run: snow dcm plan --target DEV -x
+
+      - name: Plan PROD
+        run: snow dcm plan --target PROD -x

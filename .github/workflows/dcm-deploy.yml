@@ -1,0 +1,66 @@
+name: DCM Deploy (DEV -> PROD)
+
+on:
+  push:
+    branches: [main]
+    paths: ['sales_cicd/**', 'tests/**', '.github/workflows/**']
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: SFSENORTHAMERICA-DEMO459
+  SNOWFLAKE_ROLE: DCM_DEVELOPER
+  SNOWFLAKE_WAREHOUSE: DCM_DEMO_1_WH_DEV
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: dev   # OIDC subject: repo:<owner>/<repo>:environment:dev
+    env:
+      SNOWFLAKE_USER: DCM_CICD_DEV_SVC
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Snowflake CLI (OIDC)
+        uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+
+      - name: Plan DEV
+        working-directory: sales_cicd
+        run: snow dcm plan --target DEV -x
+
+      - name: Deploy DEV
+        working-directory: sales_cicd
+        run: snow dcm deploy --target DEV -x --alias "gh-${{ github.run_number }} ${{ github.sha }}"
+
+      - name: Smoke test DEV
+        run: snow sql -x -f tests/smoke_test.sql --variable env=DEV
+
+  deploy-prod:
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: prod  # Required reviewer approval gate; OIDC subject ...:environment:prod
+    env:
+      SNOWFLAKE_USER: DCM_CICD_PROD_SVC
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Snowflake CLI (OIDC)
+        uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+
+      - name: Plan PROD
+        working-directory: sales_cicd
+        run: snow dcm plan --target PROD -x
+
+      - name: Deploy PROD
+        working-directory: sales_cicd
+        run: snow dcm deploy --target PROD -x --alias "gh-${{ github.run_number }} ${{ github.sha }}"
+
+      - name: Smoke test PROD
+        run: snow sql -x -f tests/smoke_test.sql --variable env=PROD

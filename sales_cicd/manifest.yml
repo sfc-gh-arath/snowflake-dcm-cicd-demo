@@ -1,0 +1,30 @@
+manifest_version: 2
+type: DCM_PROJECT
+default_target: DEV
+
+targets:
+  DEV:
+    account_identifier: SFSENORTHAMERICA-DEMO459
+    project_name: DCM_DEMO.PROJECTS.SALES_CICD_DEV
+    project_owner: DCM_DEVELOPER
+    templating_config: DEV
+  PROD:
+    account_identifier: SFSENORTHAMERICA-DEMO459
+    project_name: DCM_DEMO.PROJECTS.SALES_CICD_PROD
+    project_owner: DCM_DEVELOPER
+    templating_config: PROD
+
+assets:
+  sales_analysis:
+    path: 'code_bundles/sales_analysis/**/*'
+
+templating:
+  defaults:
+    wh_size: XSMALL
+  configurations:
+    DEV:
+      env: _DEV
+      target_lag: 1 hour
+    PROD:
+      env: _PROD
+      target_lag: 5 minutes

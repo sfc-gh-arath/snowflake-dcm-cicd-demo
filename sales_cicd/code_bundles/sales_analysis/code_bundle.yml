@@ -1,0 +1,10 @@
+bundle:
+  type: custom
+  compute_type: compute_pool
+  language: python
+
+  compute_options:
+    compute_pool: SYSTEM_COMPUTE_POOL_CPU
+    # Assets are not Jinja-rendered; the notebook switches to SALES_CICD_WH_<env> at runtime
+    query_warehouse: DCM_DEMO_1_WH_DEV
+    runtime_version: 'V2.9-CPU-PY3.12'
