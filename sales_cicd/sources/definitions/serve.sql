@@ -9,7 +9,9 @@ DEFINE SEMANTIC VIEW SALES_CICD{{env}}.ANALYTICS.SV_SALES
         orders.ORDER_DATE AS DATE(orders.ORDER_TS)
             COMMENT = 'Date the order was placed',
         orders.CUSTOMER_ID AS orders.CUSTOMER_ID
-            COMMENT = 'Customer identifier'
+            COMMENT = 'Customer identifier',
+        orders.SALES_REGION AS orders.SALES_REGION 
+            COMMENT = 'Sales region'
     )
     METRICS (
         orders.TOTAL_REVENUE AS SUM(orders.AMOUNT)
